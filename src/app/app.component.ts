@@ -1,12 +1,13 @@
 import { Component } from '@angular/core';
+import { ShiftScheduleComponent } from './shift-schedule.component';
 import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  standalone: true,
+  imports: [RouterOutlet],
 })
 export class AppComponent {
-  title = 'shift-schedule-demo';
+  title = 'Shift Schedule App';
 }

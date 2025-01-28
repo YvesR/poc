@@ -1,8 +1,19 @@
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, RouterModule } from '@angular/router';
+import { bootstrapApplication } from '@angular/platform-browser';
+import { AppComponent } from './app.component';
+import { ShiftScheduleComponent } from './shift-schedule.component';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
-import { routes } from './app.routes';
+const routes = [
+  { path: '', component: ShiftScheduleComponent },
+];
 
-export const appConfig: ApplicationConfig = {
-  providers: [provideZoneChangeDetection({ eventCoalescing: true }), provideRouter(routes)]
+bootstrapApplication(AppComponent, {
+  providers: [provideRouter(routes)],
+});
+
+export const appConfig = {
+  providers: [
+    provideRouter(routes), provideAnimationsAsync(),
+  ],
 };
