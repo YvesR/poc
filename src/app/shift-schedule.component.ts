@@ -27,7 +27,9 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
         <table mat-table [dataSource]="staffData" class="mat-elevation-z8">
           <!-- Staff Name Column -->
           <ng-container matColumnDef="staffName">
-            <th mat-header-cell *matHeaderCellDef>Staff</th>
+            <th mat-header-cell *matHeaderCellDef class="sticky-header">
+              {{ currentYear + '/' + (currentMonth + 1) }}
+            </th>
             <td mat-cell *matCellDef="let staff" class="staff-name">
               <div class="staff-info">
                 <img
@@ -50,10 +52,14 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
               *matHeaderCellDef
               [ngClass]="{
                 'odd-column': i % 2 !== 0,
-                'even-column': i % 2 === 0
+                'even-column': i % 2 === 0,
+                'weekend-column': isWeekend(i)
               }"
             >
-              {{ day }}
+              <div class="header-day">
+                <div>{{ day }}</div>
+                <div class="header-weekday">{{ getWeekdayShort(i) }}</div>
+              </div>
             </th>
             <td
               mat-cell
@@ -196,6 +202,14 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
         border-spacing: 0;
       }
 
+      .sticky-header {
+        left: 0;
+        z-index: 3;
+        text-align: center;
+        font-weight: bold;
+        box-shadow: 4px 0 4px -4px rgba(0, 0, 0, 0.1);
+      }
+
       th {
         text-align: center;
         position: sticky;
@@ -264,20 +278,67 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
         font-size: 0.75rem;
         color: #333;
       }
+
+      .weekend-column {
+        background-color: #218895 !important;
+        color: white !important;
+        font-weight: bold;
+      }
+
+      .header-day {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .header-weekday {
+        font-size: 0.6rem;
+        margin-top: 2px;
+      }
     `,
   ],
 })
 export class ShiftScheduleComponent {
-  days = Array.from({ length: 31 }, (_, i) => (i + 1).toString());
+  today = new Date();
+  currentMonth = this.today.getMonth();
+  currentYear = this.today.getFullYear();
+  days = Array.from(
+    { length: new Date(this.currentYear, this.currentMonth + 1, 0).getDate() },
+    (_, i) => (i + 1).toString()
+  );
   displayedColumns = ['staffName', ...this.days];
   draggedShift: any = null;
   isDragging: boolean = false;
   draggedFrom: { staff: any; day: string } | null = null;
   shiftCategories = [
-    { name: 'E1', color: '#fd7e14', icon: 'wb_sunny', startTime: '06:00', endTime: '14:00' },
-    { name: 'D2', color: '#ffc107', icon: 'light_mode', startTime: '14:00', endTime: '22:00' },
-    { name: 'N3', color: '#ec4290', icon: 'light_mode', startTime: '14:00', endTime: '22:00' },
-    { name: 'B4', color: '#f8f9fa', icon: 'alarm_on', startTime: '06:00', endTime: '06:00' },
+    {
+      name: 'E1',
+      color: '#fd7e14',
+      icon: 'wb_sunny',
+      startTime: '06:00',
+      endTime: '14:00',
+    },
+    {
+      name: 'D2',
+      color: '#ffc107',
+      icon: 'light_mode',
+      startTime: '14:00',
+      endTime: '22:00',
+    },
+    {
+      name: 'N3',
+      color: '#ec4290',
+      icon: 'light_mode',
+      startTime: '14:00',
+      endTime: '22:00',
+    },
+    {
+      name: 'B4',
+      color: '#f8f9fa',
+      icon: 'alarm_on',
+      startTime: '06:00',
+      endTime: '06:00',
+    },
   ];
   staffData = this.generateStaffData();
 
@@ -285,6 +346,16 @@ export class ShiftScheduleComponent {
   isSelecting = false;
 
   constructor(private dialog: MatDialog) {}
+
+  isWeekend(dayIndex: number): boolean {
+    const day = new Date(this.currentYear, this.currentMonth, dayIndex + 1).getDay();
+    return (day === 6) || (day  === 0);
+  }
+  
+  getWeekdayShort(dayIndex: number): string {
+    const date = new Date(this.currentYear, this.currentMonth, dayIndex + 1);
+    return date.toLocaleDateString(navigator.language, { weekday: 'short' });
+  }
 
   generateStaffData() {
     const avatars = [
