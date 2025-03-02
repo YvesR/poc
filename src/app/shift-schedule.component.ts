@@ -60,11 +60,13 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
               *matCellDef="let staff"
               [ngClass]="{
                 'odd-column': i % 2 !== 0,
-                'even-column': i % 2 === 0
+                'even-column': i % 2 === 0,
+                'selected-day': isSelected(staff, day)
               }"
               cdkDropList
               [cdkDropListData]="{ staff, day }"
               (cdkDropListDropped)="onDrop($event)"
+              (mouseenter)="onHoverSelect(staff, day)"
             >
               <div class="shift-cell" [class.dragging]="isDragging">
                 <ng-container
@@ -93,7 +95,8 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
                 <button
                   *ngIf="staff.shifts[day].length < 2"
                   class="add-shift"
-                  (click)="openAddShiftDialog(staff, day)"
+                  (mousedown)="startMultiSelection(staff, day, $event)"
+                  (mouseup)="endMultiSelection(staff)"
                 >
                   Add
                 </button>
@@ -156,6 +159,11 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
         font-size: 0.8rem;
         opacity: 0;
         transition: opacity 0.3s ease;
+      }
+
+      .selected-day {
+        background: #cce5ff !important;
+        border: 1px solid #007bff;
       }
 
       .shift-cell:hover:not(.dragging) .add-shift {
@@ -261,6 +269,9 @@ export class ShiftScheduleComponent {
   ];
   staffData = this.generateStaffData();
 
+  selectedDays: { [staffName: string]: Set<string> } = {};
+  isSelecting = false;
+
   constructor(private dialog: MatDialog) {}
 
   generateStaffData() {
@@ -354,18 +365,47 @@ export class ShiftScheduleComponent {
     return shifts;
   }
 
-  openAddShiftDialog(staff: any, day: string) {
-    const dialogRef = this.dialog.open(AddShiftDialog, {
-      data: {
-        staff,
-        day,
-        shiftCategories: this.shiftCategories,
-      },
-    });
+  startMultiSelection(staff: any, day: string, event: MouseEvent) {
+    if (event.buttons === 1) {
+      // Left-click and hold
+      this.isSelecting = true;
+      this.selectedDays[staff.name] = new Set([day]);
+    }
+  }
 
+  onHoverSelect(staff: any, day: string) {
+    if (this.isSelecting) {
+      this.selectedDays[staff.name].add(day);
+    }
+  }
+
+  endMultiSelection(staff: any) {
+    this.isSelecting = false;
+    const selectedDaysArray = Array.from(
+      this.selectedDays[staff.name] || []
+    ).sort();
+
+    if (selectedDaysArray.length > 0) {
+      this.openAddShiftDialog(staff, selectedDaysArray);
+    }
+    this.selectedDays[staff.name] = new Set();
+  }
+
+  isSelected(staff: any, day: string): boolean {
+    return this.selectedDays[staff.name]?.has(day);
+  }
+
+  openAddShiftDialog(staff: any, days: string[]) {
+    const dialogRef = this.dialog.open(AddShiftDialog, {
+      data: { shiftCategories: this.shiftCategories, days, staffName: staff.name },
+    });
     dialogRef.afterClosed().subscribe((newShift) => {
       if (newShift) {
-        staff.shifts[day].push(newShift);
+        days.forEach((day) => {
+          if (staff.shifts[day].length < 2) {
+            staff.shifts[day].push(newShift);
+          }
+        });
       }
     });
   }
@@ -466,7 +506,14 @@ export class ShiftScheduleComponent {
   imports: [CommonModule, MatButtonModule],
   template: `
     <div class="dialog-container">
-      <h2 class="dialog-title">Add Shift</h2>
+      <h2 class="dialog-title">Add Shift for {{ data.staffName }}</h2>
+      <p class="dialog-subtitle">
+        Selected Days:
+        <strong *ngIf="data.days.length === 1">{{ data.days[0] }}</strong>
+        <strong *ngIf="data.days.length > 1">
+          {{ data.days[0] }} → {{ data.days[data.days.length - 1] }}
+        </strong>
+      </p>
       <div class="shift-options">
         <div
           class="shift-option"
