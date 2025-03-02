@@ -74,6 +74,7 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
                 >
                   <div
                     class="shift"
+                    style="background: {{ shift.color }}"
                     cdkDrag
                     [cdkDragData]="{ staff, day, shift }"
                     (cdkDragStarted)="onDragStart($event, shift, staff, day)"
@@ -114,20 +115,30 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
   styles: [
     `
       .schedule {
-        margin: 20px;
+        margin: 0px auto;
         height: 100vh;
         display: flex;
         flex-direction: column;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        max-width: 100%;
+        background: linear-gradient(to right, #78ffd6, #007991);
       }
+
       .table-wrapper {
+        background: linear-gradient(to right, #78ffd6, #007991);
         position: relative;
         overflow: auto;
+        border: 1px solid #e0e0e0;
       }
+
       table {
         width: 100%;
         height: 100%;
         border-collapse: collapse;
       }
+
       .shift {
         display: flex;
         align-items: center;
@@ -141,6 +152,7 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
       .shift:hover {
         background: #bbdefb;
       }
+
       .shift-cell {
         display: flex;
         flex-direction: column;
@@ -162,8 +174,8 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
       }
 
       .selected-day {
-        background: #cce5ff !important;
-        border: 1px solid #007bff;
+        background: #90caf9 !important;
+        border: 1px solid #90caf9;
       }
 
       .shift-cell:hover:not(.dragging) .add-shift {
@@ -211,7 +223,7 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
       }
 
       .even-column {
-        background-color: #f9f9f9 !important;
+        background-color: #f9f9f9;
       }
       .odd-column {
         background-color: #ffffff;
@@ -262,10 +274,10 @@ export class ShiftScheduleComponent {
   isDragging: boolean = false;
   draggedFrom: { staff: any; day: string } | null = null;
   shiftCategories = [
-    { name: 'E1', icon: 'wb_sunny', startTime: '06:00', endTime: '14:00' },
-    { name: 'D2', icon: 'light_mode', startTime: '14:00', endTime: '22:00' },
-    { name: 'N3', icon: 'light_mode', startTime: '14:00', endTime: '22:00' },
-    { name: 'B4', icon: 'alarm_on', startTime: '06:00', endTime: '06:00' },
+    { name: 'E1', color: '#fd7e14', icon: 'wb_sunny', startTime: '06:00', endTime: '14:00' },
+    { name: 'D2', color: '#ffc107', icon: 'light_mode', startTime: '14:00', endTime: '22:00' },
+    { name: 'N3', color: '#ec4290', icon: 'light_mode', startTime: '14:00', endTime: '22:00' },
+    { name: 'B4', color: '#f8f9fa', icon: 'alarm_on', startTime: '06:00', endTime: '06:00' },
   ];
   staffData = this.generateStaffData();
 
@@ -346,6 +358,7 @@ export class ShiftScheduleComponent {
     const shifts: {
       [key: string]: {
         name: string;
+        color: string;
         icon: string;
         startTime: string;
         endTime: string;
@@ -367,7 +380,6 @@ export class ShiftScheduleComponent {
 
   startMultiSelection(staff: any, day: string, event: MouseEvent) {
     if (event.buttons === 1) {
-      // Left-click and hold
       this.isSelecting = true;
       this.selectedDays[staff.name] = new Set([day]);
     }
@@ -397,7 +409,11 @@ export class ShiftScheduleComponent {
 
   openAddShiftDialog(staff: any, days: string[]) {
     const dialogRef = this.dialog.open(AddShiftDialog, {
-      data: { shiftCategories: this.shiftCategories, days, staffName: staff.name },
+      data: {
+        shiftCategories: this.shiftCategories,
+        days,
+        staffName: staff.name,
+      },
     });
     dialogRef.afterClosed().subscribe((newShift) => {
       if (newShift) {
@@ -517,6 +533,7 @@ export class ShiftScheduleComponent {
       <div class="shift-options">
         <div
           class="shift-option"
+          style="background: {{ shift.color }}"
           *ngFor="let shift of data.shiftCategories"
           (click)="addShift(shift)"
         >
@@ -588,7 +605,7 @@ export class AddShiftDialog {
   template: `
     <div class="dialog-container">
       <h2 class="dialog-title">Edit Shift</h2>
-      <div class="shift-preview">
+      <div class="shift-preview" style="background: {{ data.shift.color }}">
         <span>{{ data.shift.name }}</span>
         <i class="material-icons">{{ data.shift.icon }}</i>
       </div>
