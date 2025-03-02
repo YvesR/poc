@@ -61,6 +61,6 @@ For more information on using the Angular CLI, including detailed command refere
 ## GH Pages
 
 ```
-ng build --configuration production
+ng build --configuration production --base-href /poc/
 npx angular-cli-ghpages --dir=dist/shift-schedule-demo
 ```
